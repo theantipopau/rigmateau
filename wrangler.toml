@@ -1,0 +1,38 @@
+name = "rigmateau"
+main = ".open-next/worker.js"
+assets = { directory = ".open-next/assets", binding = "ASSETS" }
+compatibility_date = "2025-03-01"
+compatibility_flags = ["nodejs_compat"]
+
+# ─── D1 Database ─────────────────────────────────────────────────────────────
+# Run: wrangler d1 create rigmateapp-db
+# Then update database_id below
+
+[[d1_databases]]
+binding = "DB"
+database_name = "rigmateapp-db"
+database_id = "be122a7e-bc0c-43ce-948f-23fd8747df53"
+
+# ─── R2 Bucket (for build card image exports) ─────────────────────────────────
+# Run: wrangler r2 bucket create rigmateapp-assets
+
+[[r2_buckets]]
+binding = "R2_STORAGE"
+bucket_name = "rigmateapp-assets"
+
+# ─── KV Namespace (for pricing cache) ─────────────────────────────────────────
+# Run: wrangler kv namespace create "PRICE_CACHE"
+# Then update id below
+
+[[kv_namespaces]]
+binding = "PRICE_CACHE"
+id = "95a3a02f3d8f43c4aefbb87173bf8c64"
+
+# ─── Environment Variables ───────────────────────────────────────────────────
+[vars]
+NODE_ENV = "production"
+
+# ─── Local Development ───────────────────────────────────────────────────────
+[dev]
+port = 8788
+local_protocol = "http"

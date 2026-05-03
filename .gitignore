@@ -39,3 +39,19 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/app/generated/prisma
+
+# Cloudflare build output
+/.open-next/
+
+# Wrangler local dev state
+/.wrangler/
+
+# Local SQLite databases
+*.db
+*.db-shm
+*.db-wal
+
+# Generated D1 seed (derived from dev.db)
+/prisma/d1-seed.sql

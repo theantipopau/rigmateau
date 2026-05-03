@@ -1,0 +1,214 @@
+// RigMate AU – Prisma Schema
+// Local dev: SQLite | Production: Cloudflare D1
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ─── Category ────────────────────────────────────────────────────────────────
+
+model Category {
+  id          String  @id @default(cuid())
+  slug        String  @unique   // "cpu", "gpu", "motherboard", …
+  name        String
+  safeImport  Boolean @default(true) // false = risky for AliExpress
+  parts       Part[]
+}
+
+// ─── Part ────────────────────────────────────────────────────────────────────
+
+model Part {
+  id           String   @id @default(cuid())
+  categoryId   String
+  category     Category @relation(fields: [categoryId], references: [id])
+
+  name         String
+  brand        String
+  model        String
+  sku          String?
+  imageUrl     String?
+  description  String?
+
+  // CPU / Motherboard
+  socket       String?  // "AM4", "AM5", "LGA1700"
+  chipset      String?  // "X570", "B550", "Z790"
+
+  // RAM / Motherboard
+  ramType      String?  // "DDR4", "DDR5"
+  ramSlots     Int?
+  maxRamGb     Int?
+
+  // Form factor
+  formFactor   String?  // "ATX", "mATX", "ITX", "SFX"
+
+  // Dimensions (mm)
+  lengthMm     Int?     // GPU length / case GPU clearance
+  heightMm     Int?     // cooler height / case cooler clearance
+  widthMm      Int?
+
+  // Power
+  tdpWatts     Int?
+  psuWatts     Int?     // PSU rated wattage
+  psuFormFactor String? // "ATX", "SFX"
+
+  // Performance (seeded estimates)
+  benchmarkScore Int?
+  fps1080p     Int?
+  fps1440p     Int?
+  fps4K        Int?
+
+  // Misc
+  cores        Int?
+  threads      Int?
+  boostClockMhz Int?
+  baseCockMhz  Int?
+  cacheMb      Int?
+  capacityGb   Int?     // RAM / SSD
+  speedMhz     Int?     // RAM speed
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  listings     Listing[]
+  buildParts   BuildPart[]
+  compatAsSubject CompatibilityRule[] @relation("SubjectPart")
+  compatAsTarget  CompatibilityRule[] @relation("TargetPart")
+}
+
+// ─── Retailer ────────────────────────────────────────────────────────────────
+
+model Retailer {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  url         String
+  country     String   @default("AU")
+  source      String   // "local", "ebay", "aliexpress"
+  logoUrl     String?
+  listings    Listing[]
+}
+
+// ─── Seller (eBay / AliExpress) ──────────────────────────────────────────────
+
+model Seller {
+  id           String   @id @default(cuid())
+  username     String
+  platform     String   // "ebay", "aliexpress"
+  profileUrl   String?
+  country      String?
+  trustScore   SellerTrustScore?
+  listings     Listing[]
+}
+
+model SellerTrustScore {
+  id           String  @id @default(cuid())
+  sellerId     String  @unique
+  seller       Seller  @relation(fields: [sellerId], references: [id])
+  rating       Float   // 0-5
+  reviewCount  Int
+  orderCount   Int?
+  positivePercent Float?
+  shipsToAU    Boolean @default(true)
+  score        Int     // 0-100 computed trust score
+  updatedAt    DateTime @updatedAt
+}
+
+// ─── Listing ─────────────────────────────────────────────────────────────────
+
+model Listing {
+  id            String   @id @default(cuid())
+  partId        String
+  part          Part     @relation(fields: [partId], references: [id])
+  retailerId    String
+  retailer      Retailer @relation(fields: [retailerId], references: [id])
+  sellerId      String?
+  seller        Seller?  @relation(fields: [sellerId], references: [id])
+
+  url           String?
+  price         Float    // AUD
+  shipping      Float    @default(0)
+  currency      String   @default("AUD")
+  inStock       Boolean  @default(true)
+  condition     String   @default("new") // "new", "used", "refurbished"
+  source        String   // "local", "ebay", "aliexpress"
+  affiliateUrl  String?
+
+  deliveryDays  Int?
+  warrantyMonths Int?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  priceHistory  PriceHistory[]
+}
+
+// ─── PriceHistory ─────────────────────────────────────────────────────────────
+
+model PriceHistory {
+  id        String   @id @default(cuid())
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id])
+  price     Float
+  shipping  Float    @default(0)
+  recordedAt DateTime @default(now())
+}
+
+// ─── Build ───────────────────────────────────────────────────────────────────
+
+model Build {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  purpose     String?  // "1440p Gaming", "SFF Build", "Workstation"
+  isPublic    Boolean  @default(false)
+  userId      String?  // future auth
+
+  totalPrice  Float?
+  estimatedWatts Int?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  buildParts  BuildPart[]
+}
+
+// ─── BuildPart ────────────────────────────────────────────────────────────────
+
+model BuildPart {
+  id        String  @id @default(cuid())
+  buildId   String
+  build     Build   @relation(fields: [buildId], references: [id], onDelete: Cascade)
+  partId    String
+  part      Part    @relation(fields: [partId], references: [id])
+  quantity  Int     @default(1)
+  note      String?
+
+  @@unique([buildId, partId])
+}
+
+// ─── CompatibilityRule ────────────────────────────────────────────────────────
+
+model CompatibilityRule {
+  id           String  @id @default(cuid())
+  subjectPartId String?
+  subjectPart  Part?   @relation("SubjectPart", fields: [subjectPartId], references: [id])
+  targetPartId  String?
+  targetPart   Part?   @relation("TargetPart", fields: [targetPartId], references: [id])
+
+  // Generic rules use category slugs instead of specific parts
+  subjectCategory String?
+  targetCategory  String?
+  field           String?  // "socket", "ramType", "formFactor"
+  operator        String?  // "equals", "notEquals", "lte", "gte"
+  value           String?
+
+  result      String   // "compatible", "incompatible", "warning", "unknown"
+  explanation String
+  severity    String   @default("error") // "error", "warning", "info"
+}
