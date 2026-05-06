@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Star, ShieldCheck, ShieldAlert, Truck, CheckCircle2, ExternalLink } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { X, Star, ShieldAlert, Truck, ExternalLink } from 'lucide-react'
+import { Badge, type BadgeProps } from '@/components/ui/badge'
 import type { PriceScore, WarrantyRisk } from '@/lib/types'
 import { formatAUD } from '@/lib/utils'
 
@@ -12,28 +12,28 @@ interface Props {
 }
 
 function WarrantyBadge({ risk }: { risk: WarrantyRisk }) {
-  const map: Record<WarrantyRisk, { label: string; variant: string }> = {
+  const map: Record<WarrantyRisk, { label: string; variant: NonNullable<BadgeProps['variant']> }> = {
     low: { label: 'Full Warranty', variant: 'success' },
     medium: { label: 'Limited Warranty', variant: 'warning' },
     high: { label: 'Warranty Risk', variant: 'danger' },
     'very-high': { label: 'No Warranty', variant: 'danger' },
   }
   const { label, variant } = map[risk]
-  return <Badge variant={variant as any} className="text-xs">{label}</Badge>
+  return <Badge variant={variant} className="text-xs">{label}</Badge>
 }
 
 function VerdictBadge({ verdict }: { verdict: PriceScore['verdict'] }) {
-  const map = {
+  const map: Record<PriceScore['verdict'], { label: string; variant: NonNullable<BadgeProps['variant']> }> = {
     excellent: { label: 'Excellent', variant: 'success' },
     good: { label: 'Good Value', variant: 'info' },
     fair: { label: 'Fair', variant: 'secondary' },
     avoid: { label: 'Avoid', variant: 'danger' },
   }
   const { label, variant } = map[verdict]
-  return <Badge variant={variant as any} className="text-xs font-semibold">{label}</Badge>
+  return <Badge variant={variant} className="text-xs font-semibold">{label}</Badge>
 }
 
-function SourceBadge({ source }: { source: string }) {
+function SourceBadge({ source }: { source: PriceScore['listing']['source'] }) {
   if (source === 'local') return <Badge variant="success" className="text-xs">AU Retailer</Badge>
   if (source === 'ebay') return <Badge variant="info" className="text-xs">eBay AU</Badge>
   return <Badge variant="warning" className="text-xs">AliExpress</Badge>

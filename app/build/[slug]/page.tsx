@@ -1,6 +1,9 @@
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { prisma } from '@/lib/db'
+import { getDb } from '@/lib/db'
 import BuildShowcase from '@/components/build/BuildShowcase'
+
+export const dynamic = 'force-dynamic'
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -8,29 +11,27 @@ interface Props {
 
 export default async function BuildPage({ params }: Props) {
   const { slug } = await params
+  const db = await getDb()
+  const build = await db.build.findUnique({ where: { slug } })
 
-  const build = await prisma.build.findUnique({
-    where: { slug },
-    include: {
-      buildParts: {
-        include: {
-          part: { include: { category: true } },
-        },
-      },
-    },
-  })
+  if (!build || !build.isPublic) {
+    notFound()
+  }
 
-  if (!build || !build.isPublic) notFound()
-
-  return <BuildShowcase build={build as any} />
+  return <BuildShowcase build={build} />
 }
 
-export async function generateMetadata({ params }: Props) {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const build = await prisma.build.findUnique({ where: { slug } })
-  if (!build) return {}
+  const db = await getDb()
+  const build = await db.build.findUnique({ where: { slug } })
+
+  if (!build) {
+    return {}
+  }
+
   return {
-    title: `${build.name} – RigMate AU`,
+    title: `${build.name} - RigMate AU`,
     description: `Check out this ${build.purpose ?? 'PC build'} on RigMate AU`,
   }
 }

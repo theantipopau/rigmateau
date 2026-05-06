@@ -627,6 +627,139 @@ export const MOCK_LOCAL_LISTINGS: Record<string, Listing[]> = {
     local('loc-tlc12-msy', 'fan-thermalright-tl-c12-3pack', R.msy,      22,   0,    true,  2, 12),
     local('loc-tlc12-um',  'fan-thermalright-tl-c12-3pack', R.umart,    19,   0,    true,  3, 12),
   ],
+
+  // ── AIB GPU variants ──────────────────────────────────────────────────────
+  'gpu-msi-4090-gaming-x-trio': [
+    local('loc-msi4090gx-sc',  'gpu-msi-4090-gaming-x-trio', R.scorptec, 2449, 0,    true,  3, 36),
+    local('loc-msi4090gx-pg',  'gpu-msi-4090-gaming-x-trio', R.pccg,     2469, 9.90, true,  4, 36),
+    local('loc-msi4090gx-ple', 'gpu-msi-4090-gaming-x-trio', R.ple,      2445, 12,   true,  5, 36),
+    local('loc-msi4090gx-um',  'gpu-msi-4090-gaming-x-trio', R.umart,    2439, 0,    false, 3, 36),
+  ],
+  'gpu-gigabyte-4090-aorus-xtreme': [
+    local('loc-gb4090ax-sc',  'gpu-gigabyte-4090-aorus-xtreme', R.scorptec, 2549, 0,    true,  3, 36),
+    local('loc-gb4090ax-pg',  'gpu-gigabyte-4090-aorus-xtreme', R.pccg,     2569, 9.90, true,  4, 36),
+    local('loc-gb4090ax-ple', 'gpu-gigabyte-4090-aorus-xtreme', R.ple,      2545, 12,   true,  5, 36),
+  ],
+  'gpu-asus-4090-tuf-gaming': [
+    local('loc-asus4090tuf-sc',  'gpu-asus-4090-tuf-gaming', R.scorptec, 2499, 0,    true,  3, 36),
+    local('loc-asus4090tuf-pg',  'gpu-asus-4090-tuf-gaming', R.pccg,     2519, 9.90, true,  4, 36),
+    local('loc-asus4090tuf-um',  'gpu-asus-4090-tuf-gaming', R.umart,    2489, 0,    true,  3, 36),
+  ],
+  'gpu-msi-4080s-gaming-x-slim': [
+    local('loc-msi4080slim-sc',  'gpu-msi-4080s-gaming-x-slim', R.scorptec, 1279, 0,    true,  3, 36),
+    local('loc-msi4080slim-pg',  'gpu-msi-4080s-gaming-x-slim', R.pccg,     1299, 9.90, true,  4, 36),
+    local('loc-msi4080slim-msy', 'gpu-msi-4080s-gaming-x-slim', R.msy,      1269, 0,    true,  2, 36),
+    local('loc-msi4080slim-um',  'gpu-msi-4080s-gaming-x-slim', R.umart,    1265, 0,    true,  3, 36),
+  ],
+  'gpu-gigabyte-9070xt-aorus': [
+    local('loc-gb9070ax-sc',  'gpu-gigabyte-9070xt-aorus', R.scorptec, 849,  0,    true,  3, 36),
+    local('loc-gb9070ax-pg',  'gpu-gigabyte-9070xt-aorus', R.pccg,     869,  9.90, true,  4, 36),
+    local('loc-gb9070ax-ple', 'gpu-gigabyte-9070xt-aorus', R.ple,      845,  12,   true,  5, 36),
+    local('loc-gb9070ax-um',  'gpu-gigabyte-9070xt-aorus', R.umart,    839,  0,    true,  3, 36),
+  ],
+  'gpu-asus-9070xt-rog-strix': [
+    local('loc-rog9070xt-sc',  'gpu-asus-9070xt-rog-strix', R.scorptec, 879,  0,    true,  3, 36),
+    local('loc-rog9070xt-pg',  'gpu-asus-9070xt-rog-strix', R.pccg,     899,  9.90, true,  4, 36),
+    local('loc-rog9070xt-ple', 'gpu-asus-9070xt-rog-strix', R.ple,      875,  12,   true,  5, 36),
+  ],
+  'gpu-msi-9070-mech': [
+    local('loc-msi9070m-sc',  'gpu-msi-9070-mech', R.scorptec, 639,  0,    true,  3, 36),
+    local('loc-msi9070m-pg',  'gpu-msi-9070-mech', R.pccg,     649,  9.90, true,  4, 36),
+    local('loc-msi9070m-msy', 'gpu-msi-9070-mech', R.msy,      635,  0,    true,  2, 36),
+    local('loc-msi9070m-um',  'gpu-msi-9070-mech', R.umart,    632,  0,    true,  3, 36),
+  ],
+  'gpu-gigabyte-5080-gaming-oc': [
+    local('loc-gb5080goc-sc',  'gpu-gigabyte-5080-gaming-oc', R.scorptec, 1569, 0,    true,  3, 36),
+    local('loc-gb5080goc-pg',  'gpu-gigabyte-5080-gaming-oc', R.pccg,     1589, 9.90, true,  4, 36),
+    local('loc-gb5080goc-ple', 'gpu-gigabyte-5080-gaming-oc', R.ple,      1565, 12,   true,  5, 36),
+    local('loc-gb5080goc-um',  'gpu-gigabyte-5080-gaming-oc', R.umart,    1559, 0,    false, 3, 36),
+  ],
+  'gpu-asus-5070ti-rog-strix': [
+    local('loc-rog5070ti-sc',  'gpu-asus-5070ti-rog-strix', R.scorptec, 1189, 0,    true,  3, 36),
+    local('loc-rog5070ti-pg',  'gpu-asus-5070ti-rog-strix', R.pccg,     1209, 9.90, true,  4, 36),
+    local('loc-rog5070ti-ple', 'gpu-asus-5070ti-rog-strix', R.ple,      1185, 12,   true,  5, 36),
+    local('loc-rog5070ti-um',  'gpu-asus-5070ti-rog-strix', R.umart,    1179, 0,    true,  3, 36),
+  ],
+  'gpu-sapphire-rx7800xt-nitro': [
+    local('loc-sap7800n-sc',  'gpu-sapphire-rx7800xt-nitro', R.scorptec, 679,  0,    true,  3, 36),
+    local('loc-sap7800n-pg',  'gpu-sapphire-rx7800xt-nitro', R.pccg,     689,  9.90, true,  4, 36),
+    local('loc-sap7800n-ple', 'gpu-sapphire-rx7800xt-nitro', R.ple,      675,  12,   true,  5, 36),
+    local('loc-sap7800n-um',  'gpu-sapphire-rx7800xt-nitro', R.umart,    669,  0,    true,  3, 36),
+  ],
+
+  // ── New PSUs ──────────────────────────────────────────────────────────────
+  'psu-seasonic-focus-gx-850': [
+    local('loc-ssgx850-sc',  'psu-seasonic-focus-gx-850', R.scorptec, 189,  0,    true,  3, 120),
+    local('loc-ssgx850-pg',  'psu-seasonic-focus-gx-850', R.pccg,     195,  9.90, true,  4, 120),
+    local('loc-ssgx850-ple', 'psu-seasonic-focus-gx-850', R.ple,      185,  12,   true,  5, 120),
+    local('loc-ssgx850-um',  'psu-seasonic-focus-gx-850', R.umart,    182,  0,    true,  3, 120),
+  ],
+  'psu-evga-850-g6': [
+    local('loc-evga850-sc',  'psu-evga-850-g6', R.scorptec, 179,  0,    true,  3, 120),
+    local('loc-evga850-pg',  'psu-evga-850-g6', R.pccg,     185,  9.90, true,  4, 120),
+    local('loc-evga850-msy', 'psu-evga-850-g6', R.msy,      175,  0,    true,  2, 120),
+    local('loc-evga850-um',  'psu-evga-850-g6', R.umart,    172,  0,    true,  3, 120),
+  ],
+  'psu-bequiet-dark-power-13-1000': [
+    local('loc-dp13-sc',  'psu-bequiet-dark-power-13-1000', R.scorptec, 349,  0,    true,  3, 120),
+    local('loc-dp13-pg',  'psu-bequiet-dark-power-13-1000', R.pccg,     359,  9.90, true,  4, 120),
+    local('loc-dp13-ple', 'psu-bequiet-dark-power-13-1000', R.ple,      345,  12,   true,  5, 120),
+  ],
+  'psu-corsair-hx1000i': [
+    local('loc-hx1000i-sc',  'psu-corsair-hx1000i', R.scorptec, 329,  0,    true,  3, 120),
+    local('loc-hx1000i-pg',  'psu-corsair-hx1000i', R.pccg,     339,  9.90, true,  4, 120),
+    local('loc-hx1000i-ple', 'psu-corsair-hx1000i', R.ple,      325,  12,   true,  5, 120),
+    local('loc-hx1000i-um',  'psu-corsair-hx1000i', R.umart,    322,  0,    false, 3, 120),
+  ],
+
+  // ── New Cases ─────────────────────────────────────────────────────────────
+  'case-fractal-torrent': [
+    local('loc-torrent-sc',  'case-fractal-torrent', R.scorptec, 199,  0,    true,  3, 24),
+    local('loc-torrent-pg',  'case-fractal-torrent', R.pccg,     205,  9.90, true,  4, 24),
+    local('loc-torrent-ple', 'case-fractal-torrent', R.ple,      195,  12,   true,  5, 24),
+    local('loc-torrent-um',  'case-fractal-torrent', R.umart,    192,  0,    true,  3, 24),
+  ],
+  'case-lian-li-o11d-evo': [
+    local('loc-o11evo-sc',  'case-lian-li-o11d-evo', R.scorptec, 219,  0,    true,  3, 24),
+    local('loc-o11evo-pg',  'case-lian-li-o11d-evo', R.pccg,     225,  9.90, true,  4, 24),
+    local('loc-o11evo-ple', 'case-lian-li-o11d-evo', R.ple,      215,  12,   true,  5, 24),
+    local('loc-o11evo-msy', 'case-lian-li-o11d-evo', R.msy,      212,  0,    true,  2, 24),
+    local('loc-o11evo-um',  'case-lian-li-o11d-evo', R.umart,    209,  0,    true,  3, 24),
+  ],
+  'case-nzxt-h9-flow': [
+    local('loc-h9flow-sc',  'case-nzxt-h9-flow', R.scorptec, 229,  0,    true,  3, 24),
+    local('loc-h9flow-pg',  'case-nzxt-h9-flow', R.pccg,     235,  9.90, true,  4, 24),
+    local('loc-h9flow-um',  'case-nzxt-h9-flow', R.umart,    225,  0,    true,  3, 24),
+  ],
+  'case-antec-df800': [
+    local('loc-df800-sc',  'case-antec-df800', R.scorptec, 159,  0,    true,  3, 24),
+    local('loc-df800-pg',  'case-antec-df800', R.pccg,     165,  9.90, true,  4, 24),
+    local('loc-df800-msy', 'case-antec-df800', R.msy,      155,  0,    true,  2, 24),
+    local('loc-df800-um',  'case-antec-df800', R.umart,    152,  0,    true,  3, 24),
+  ],
+
+  // ── New 4TB Storage ───────────────────────────────────────────────────────
+  'ssd-wd-sn850x-4tb': [
+    local('loc-sn850-4tb-sc',  'ssd-wd-sn850x-4tb', R.scorptec, 349,  0,    true,  3, 60),
+    local('loc-sn850-4tb-pg',  'ssd-wd-sn850x-4tb', R.pccg,     359,  9.90, true,  4, 60),
+    local('loc-sn850-4tb-msy', 'ssd-wd-sn850x-4tb', R.msy,      345,  0,    true,  2, 60),
+    local('loc-sn850-4tb-um',  'ssd-wd-sn850x-4tb', R.umart,    342,  0,    true,  3, 60),
+  ],
+  'ssd-samsung-990pro-4tb': [
+    local('loc-990p4-sc',  'ssd-samsung-990pro-4tb', R.scorptec, 379,  0,    true,  3, 60),
+    local('loc-990p4-pg',  'ssd-samsung-990pro-4tb', R.pccg,     389,  9.90, true,  4, 60),
+    local('loc-990p4-um',  'ssd-samsung-990pro-4tb', R.umart,    375,  0,    true,  3, 60),
+  ],
+  'ssd-seagate-firecuda-530-4tb': [
+    local('loc-fc530-4tb-sc',  'ssd-seagate-firecuda-530-4tb', R.scorptec, 369,  0,    true,  3, 60),
+    local('loc-fc530-4tb-pg',  'ssd-seagate-firecuda-530-4tb', R.pccg,     379,  9.90, true,  4, 60),
+    local('loc-fc530-4tb-ple', 'ssd-seagate-firecuda-530-4tb', R.ple,      365,  12,   true,  5, 60),
+  ],
+  'ssd-crucial-t705-4tb': [
+    local('loc-t705-4tb-sc',  'ssd-crucial-t705-4tb', R.scorptec, 449,  0,    true,  3, 60),
+    local('loc-t705-4tb-pg',  'ssd-crucial-t705-4tb', R.pccg,     459,  9.90, true,  4, 60),
+    local('loc-t705-4tb-um',  'ssd-crucial-t705-4tb', R.umart,    445,  0,    false, 3, 60),
+  ],
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

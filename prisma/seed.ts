@@ -6,7 +6,7 @@ import { PrismaLibSql } from '@prisma/adapter-libsql'
 import { PrismaClient } from '../app/generated/prisma/index.js'
 
 const adapter = new PrismaLibSql({ url: 'file:E:/RigMateAU/dev.db' })
-const prisma = new PrismaClient({ adapter } as any)
+const prisma = new PrismaClient({ adapter })
 
 async function main() {
   console.log('🌱 Seeding RigMate AU database...')

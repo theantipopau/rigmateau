@@ -1,7 +1,4 @@
-// Cloudflare Workers/Pages environment bindings
-// These types are available in the edge runtime via getRequestContext()
-
-interface CloudflareEnv {
+type RuntimeCloudflareEnv = {
   // D1 database (replaces local SQLite in production)
   DB: D1Database
 
@@ -16,7 +13,8 @@ interface CloudflareEnv {
 }
 
 declare global {
-  interface CloudflareEnv extends CloudflareEnv {}
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  interface CloudflareEnv extends RuntimeCloudflareEnv {}
 }
 
 export {}

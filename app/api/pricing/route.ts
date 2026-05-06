@@ -3,6 +3,7 @@ import { getPricedListings } from '@/lib/pricing'
 import { getDb } from '@/lib/db'
 
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -14,16 +15,13 @@ export async function GET(request: NextRequest) {
 
   try {
     const db = await getDb()
-    const part = await db.part.findUnique({
-      where: { id: partId },
-      include: { category: true },
-    })
+    const part = await db.part.findUnique({ where: { id: partId } })
 
     if (!part) {
       return NextResponse.json({ error: 'Part not found' }, { status: 404 })
     }
 
-    const scores = await getPricedListings(part as any, part.category.slug)
+    const scores = await getPricedListings(part, part.category.slug)
     return NextResponse.json({ scores })
   } catch (error) {
     console.error('Pricing fetch failed:', error)

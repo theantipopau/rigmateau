@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db'
 import { checkCompatibility } from '@/lib/compatibility'
-import type { BuildState } from '@/lib/types'
+import { isBuildSlotKey, type BuildState } from '@/lib/types'
 
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,15 +14,13 @@ export async function POST(request: NextRequest) {
     const db = await getDb()
     const parts = await db.part.findMany({
       where: { id: { in: Object.values(partIds) } },
-      include: { category: true },
     })
 
     const buildState: BuildState = {}
     for (const [slot, partId] of Object.entries(partIds)) {
-      const part = parts.find(p => p.id === partId)
-      if (part) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        buildState[slot as keyof BuildState] = part as any
+      const part = parts.find((candidate) => candidate.id === partId)
+      if (part && isBuildSlotKey(slot)) {
+        buildState[slot] = part
       }
     }
 

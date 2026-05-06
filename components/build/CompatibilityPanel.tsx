@@ -2,7 +2,7 @@
 
 import { CheckCircle2, AlertTriangle, Shield, HelpCircle, Zap } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { Badge, type BadgeProps } from '@/components/ui/badge'
 import type { CompatibilityReport, CompatibilityResult } from '@/lib/types'
 
 interface Props {
@@ -18,7 +18,7 @@ function ResultIcon({ status }: { status: CompatibilityResult['status'] }) {
   }
 }
 
-function overallBadgeVariant(status: string) {
+function overallBadgeVariant(status: CompatibilityReport['overallStatus']): NonNullable<BadgeProps['variant']> {
   if (status === 'compatible') return 'success'
   if (status === 'warning') return 'warning'
   if (status === 'incompatible') return 'danger'
@@ -34,7 +34,7 @@ export default function CompatibilityPanel({ report }: Props) {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base">Compatibility</CardTitle>
-          <Badge variant={overallBadgeVariant(report.overallStatus) as any} className="capitalize">
+          <Badge variant={overallBadgeVariant(report.overallStatus)} className="capitalize">
             {report.overallStatus}
           </Badge>
         </div>

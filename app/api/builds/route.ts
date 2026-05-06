@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db'
+import type { PartWithCategory } from '@/lib/types'
 import { z } from 'zod'
 import { slugify } from '@/lib/utils'
 
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 const CreateBuildSchema = z.object({
   name: z.string().min(1).max(100),
@@ -36,15 +38,10 @@ export async function POST(request: NextRequest) {
         purpose,
         isPublic: true,
         buildParts: {
-          create: parts.map(part => ({
+          create: parts.map((part: PartWithCategory) => ({
             partId: part.id,
             quantity: 1,
           })),
-        },
-      },
-      include: {
-        buildParts: {
-          include: { part: { include: { category: true } } },
         },
       },
     })
@@ -66,14 +63,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const db = await getDb()
-    const build = await db.build.findUnique({
-      where: { slug },
-      include: {
-        buildParts: {
-          include: { part: { include: { category: true } } },
-        },
-      },
-    })
+    const build = await db.build.findUnique({ where: { slug } })
 
     if (!build) {
       return NextResponse.json({ error: 'Build not found' }, { status: 404 })

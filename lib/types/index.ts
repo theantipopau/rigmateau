@@ -148,6 +148,22 @@ export type BuildSlotKey =
   | 'cooler'
   | 'fan'
 
+export const BUILD_SLOT_KEYS: BuildSlotKey[] = [
+  'cpu',
+  'motherboard',
+  'ram',
+  'gpu',
+  'storage',
+  'psu',
+  'case',
+  'cooler',
+  'fan',
+]
+
+export function isBuildSlotKey(value: string): value is BuildSlotKey {
+  return BUILD_SLOT_KEYS.includes(value as BuildSlotKey)
+}
+
 export interface BuildPart {
   partId: string
   part: Part
@@ -167,8 +183,33 @@ export interface Build {
   buildParts: BuildPart[]
 }
 
+export type PartWithCategory = Part & { category: Category }
+
+export interface SavedBuildPart extends BuildPart {
+  id: string
+  part: PartWithCategory
+}
+
+export interface SavedBuild extends Build {
+  createdAt: Date | string
+  updatedAt: Date | string
+  buildParts: SavedBuildPart[]
+}
+
 // Keyed build state used in the UI
 export type BuildState = Partial<Record<BuildSlotKey, Part>>
+
+// ─── Build Templates ─────────────────────────────────────────────────────────
+
+export interface BuildTemplate {
+  id: string
+  name: string
+  description: string
+  category: 'gaming' | 'workstation' | 'budget' | 'streaming' | 'content-creation'
+  estimatedPrice: number // AUD, approximate
+  performance?: string
+  parts: Partial<Record<BuildSlotKey, string>> // part IDs
+}
 
 // ─── Compatibility ───────────────────────────────────────────────────────────
 

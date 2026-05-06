@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="none">
+  <rect width="40" height="40" rx="8" fill="#1a1a2e"/>
+  <!-- GPU body -->
+  <rect x="4" y="14" width="32" height="14" rx="3" fill="#1e40af" stroke="#3b82f6" stroke-width="1.2"/>
+  <!-- fan circle -->
+  <circle cx="14" cy="21" r="5.5" fill="#1d4ed8" stroke="#60a5fa" stroke-width="1"/>
+  <circle cx="14" cy="21" r="2" fill="#3b82f6"/>
+  <circle cx="25" cy="21" r="4.5" fill="#1d4ed8" stroke="#60a5fa" stroke-width="1"/>
+  <circle cx="25" cy="21" r="1.8" fill="#3b82f6"/>
+  <!-- fan blades suggestion -->
+  <line x1="14" y1="16" x2="14" y2="18" stroke="#93c5fd" stroke-width="1"/>
+  <line x1="14" y1="24" x2="14" y2="26" stroke="#93c5fd" stroke-width="1"/>
+  <line x1="9" y1="21" x2="11" y2="21" stroke="#93c5fd" stroke-width="1"/>
+  <line x1="17" y1="21" x2="19" y2="21" stroke="#93c5fd" stroke-width="1"/>
+  <!-- PCIe connector -->
+  <rect x="5" y="27" width="30" height="3" rx="1" fill="#1e3a8a"/>
+  <rect x="7" y="27.5" width="26" height="2" rx="0.5" fill="#3b82f6" opacity="0.5"/>
+  <!-- outputs -->
+  <rect x="34" y="16" width="3" height="2" rx="0.5" fill="#60a5fa"/>
+  <rect x="34" y="19.5" width="3" height="2" rx="0.5" fill="#60a5fa"/>
+  <rect x="34" y="23" width="3" height="2" rx="0.5" fill="#93c5fd"/>
+</svg>

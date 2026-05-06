@@ -5,13 +5,19 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
-  // Exclude dev-only DB adapter from the CF Workers bundle.
-  // @libsql/client and @prisma/adapter-libsql are only used in local dev.
-  // In production, @prisma/adapter-d1 is used via getCloudflareContext().
-  serverExternalPackages: [
-    '@libsql/client',
-    '@prisma/adapter-libsql',
-  ],
+  // In production builds (for CF Workers), alias dev-only DB packages to an
+  // empty module so webpack does NOT trace them into the build output.
+  // The CF Workers runtime always uses @prisma/adapter-d1 via getCloudflareContext().
+  webpack: (config, { dev }) => {
+    if (!dev) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        '@libsql/client': false,
+        '@prisma/adapter-libsql': false,
+      }
+    }
+    return config
+  },
 }
 
 export default nextConfig
