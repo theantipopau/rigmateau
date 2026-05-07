@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPricedListings } from '@/lib/pricing'
-import { getDb } from '@/lib/db'
+import { getPricedListings, summarizePriceCoverage } from '@/lib/pricing'
+import { IS_GITHUB_PAGES } from '@/lib/runtime/deploy'
+import { getStaticPartById } from '@/lib/static/catalog'
 
 export const runtime = 'nodejs'
-export const dynamic = 'force-dynamic'
+export const dynamic = 'force-static'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -14,15 +15,22 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const db = await getDb()
-    const part = await db.part.findUnique({ where: { id: partId } })
+    const part = IS_GITHUB_PAGES
+      ? getStaticPartById(partId)
+      : await (async () => {
+          const { getDb } = await import('@/lib/db')
+          const db = await getDb()
+          return db.part.findUnique({ where: { id: partId } })
+        })()
 
     if (!part) {
       return NextResponse.json({ error: 'Part not found' }, { status: 404 })
     }
 
     const scores = await getPricedListings(part, part.category.slug)
-    return NextResponse.json({ scores })
+    const coverage = summarizePriceCoverage(scores, part.category.slug)
+
+    return NextResponse.json({ scores, coverage })
   } catch (error) {
     console.error('Pricing fetch failed:', error)
     return NextResponse.json({ error: 'Pricing fetch failed' }, { status: 500 })

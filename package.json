@@ -5,11 +5,14 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build --webpack",
+    "build:github-pages": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
+    "deploy:github-pages": "npm run build:github-pages",
     "pages:build": "opennextjs-cloudflare build",
     "pages:deploy": "opennextjs-cloudflare build && wrangler deploy",
     "pages:preview": "opennextjs-cloudflare build && wrangler dev",
+    "cf:build": "opennextjs-cloudflare build",
     "db:seed": "node --experimental-transform-types prisma/seed.ts",
     "db:migrate": "npx prisma migrate dev",
     "db:studio": "npx prisma studio"

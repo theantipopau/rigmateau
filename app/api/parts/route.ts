@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { IS_GITHUB_PAGES } from '@/lib/runtime/deploy'
+import { getStaticPartById, getStaticParts } from '@/lib/static/catalog'
 
 export const runtime = 'nodejs'
-export const dynamic = 'force-dynamic'
+export const dynamic = 'force-static'
 
 const FF_HIERARCHY: Record<string, number> = { ITX: 1, mATX: 2, ATX: 3, 'E-ATX': 4 }
 
@@ -15,6 +16,7 @@ function allowedFormFactors(maxFormFactor: string): string[] {
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
+  const partId = searchParams.get('id')
   const categorySlug = searchParams.get('category')
   const query = searchParams.get('q')
 
@@ -35,7 +37,45 @@ export async function GET(request: NextRequest) {
   if (filterPsuFormFactor) compatWhere.psuFormFactorFilter = filterPsuFormFactor
 
   try {
+    if (IS_GITHUB_PAGES) {
+      if (partId) {
+        const part = getStaticPartById(partId)
+        if (!part) {
+          return NextResponse.json({ error: 'Part not found' }, { status: 404 })
+        }
+        return NextResponse.json({ part })
+      }
+
+      let parts = getStaticParts()
+      if (categorySlug) {
+        parts = parts.filter((part) => part.category.slug === categorySlug)
+      }
+      if (query) {
+        const q = query.toLowerCase()
+        parts = parts.filter(
+          (part) =>
+            part.name.toLowerCase().includes(q) ||
+            part.brand.toLowerCase().includes(q) ||
+            part.model.toLowerCase().includes(q)
+        )
+      }
+
+      return NextResponse.json({ parts })
+    }
+
+    const { getDb } = await import('@/lib/db')
     const db = await getDb()
+
+    if (partId) {
+      const part = await db.part.findUnique({ where: { id: partId } })
+
+      if (!part) {
+        return NextResponse.json({ error: 'Part not found' }, { status: 404 })
+      }
+
+      return NextResponse.json({ part })
+    }
+
     const parts = await db.part.findMany({
       where: {
         ...(categorySlug && {

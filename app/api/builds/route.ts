@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
 import type { PartWithCategory } from '@/lib/types'
 import { z } from 'zod'
 import { slugify } from '@/lib/utils'
+import { IS_GITHUB_PAGES } from '@/lib/runtime/deploy'
 
 export const runtime = 'nodejs'
-export const dynamic = 'force-dynamic'
+export const dynamic = 'force-static'
 
 const CreateBuildSchema = z.object({
   name: z.string().min(1).max(100),
@@ -14,6 +14,13 @@ const CreateBuildSchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
+  if (IS_GITHUB_PAGES) {
+    return NextResponse.json(
+      { error: 'Build persistence API is unavailable in static mode' },
+      { status: 405 }
+    )
+  }
+
   try {
     const body = await request.json()
     const parsed = CreateBuildSchema.safeParse(body)
@@ -24,6 +31,7 @@ export async function POST(request: NextRequest) {
 
     const { name, purpose, partIds } = parsed.data
 
+    const { getDb } = await import('@/lib/db')
     const db = await getDb()
     const parts = await db.part.findMany({
       where: { id: { in: Object.values(partIds) } },
@@ -46,7 +54,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return NextResponse.json({ build, url: `/build/${build.slug}` })
+    return NextResponse.json({ build, url: `/showcase?slug=${build.slug}` })
   } catch (error) {
     console.error('Build creation failed:', error)
     return NextResponse.json({ error: 'Build creation failed' }, { status: 500 })
@@ -54,6 +62,13 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  if (IS_GITHUB_PAGES) {
+    return NextResponse.json(
+      { error: 'Build fetch API is unavailable in static mode' },
+      { status: 405 }
+    )
+  }
+
   const { searchParams } = new URL(request.url)
   const slug = searchParams.get('slug')
 
@@ -62,6 +77,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const { getDb } = await import('@/lib/db')
     const db = await getDb()
     const build = await db.build.findUnique({ where: { slug } })
 

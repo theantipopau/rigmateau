@@ -1,7 +1,15 @@
 import type { NextConfig } from 'next'
 
+const deployTarget = process.env.NEXT_PUBLIC_DEPLOY_TARGET === 'github-pages' ? 'github-pages' : 'cloudflare'
+const isGithubPages = deployTarget === 'github-pages'
+const configuredBasePath = process.env.NEXT_PUBLIC_BASE_PATH ?? (isGithubPages ? '/rigmateau' : '')
+
 const nextConfig: NextConfig = {
   experimental: {},
+  output: isGithubPages ? 'export' : undefined,
+  trailingSlash: isGithubPages,
+  basePath: configuredBasePath || undefined,
+  assetPrefix: configuredBasePath || undefined,
   images: {
     unoptimized: true,
   },
