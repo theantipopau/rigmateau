@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react'
 import { X, Star, ShieldAlert, Truck, ExternalLink } from 'lucide-react'
 import { Badge, type BadgeProps } from '@/components/ui/badge'
 import type { PriceScore, WarrantyRisk } from '@/lib/types'
+import { fetchPricing } from '@/lib/runtime/client-data'
 import { formatAUD } from '@/lib/utils'
+import MonetizationDisclosure from '@/components/common/MonetizationDisclosure'
 
 interface Props {
   partId: string
@@ -39,14 +41,29 @@ function SourceBadge({ source }: { source: PriceScore['listing']['source'] }) {
   return <Badge variant="warning" className="text-xs">AliExpress</Badge>
 }
 
+function TrustIntentBadge({ score }: { score: PriceScore }) {
+  if (score.listing.source === 'local') {
+    return <Badge variant="success" className="text-xs">Local warranty</Badge>
+  }
+
+  if (score.worthImporting && score.verdict !== 'avoid') {
+    return <Badge variant="info" className="text-xs">Trusted import</Badge>
+  }
+
+  if (score.verdict === 'avoid' || score.listing.warrantyRisk === 'very-high') {
+    return <Badge variant="danger" className="text-xs">Avoid import</Badge>
+  }
+
+  return <Badge variant="warning" className="text-xs">Import caution</Badge>
+}
+
 export default function PricePanel({ partId, onClose }: Props) {
   const [scores, setScores] = useState<PriceScore[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch(`/api/pricing?partId=${encodeURIComponent(partId)}`)
-      .then(r => r.json())
-      .then(d => { setScores(d.scores ?? []); setLoading(false) })
+    fetchPricing(partId)
+      .then((data) => { setScores(data.scores ?? []); setLoading(false) })
       .catch(() => setLoading(false))
   }, [partId])
 
@@ -103,6 +120,10 @@ export default function PricePanel({ partId, onClose }: Props) {
                 <SourceBadge source={score.listing.source} />
                 <VerdictBadge verdict={score.verdict} />
                 <WarrantyBadge risk={score.listing.warrantyRisk} />
+                <TrustIntentBadge score={score} />
+                {i === 0 && <Badge variant="success" className="text-xs">Best landed price</Badge>}
+                {i === 0 && score.listing.source === 'local' && <Badge variant="info" className="text-xs">Best local price</Badge>}
+                {score.worthImporting && <Badge variant="info" className="text-xs">Worth importing</Badge>}
                 {score.listing.inStock === false && (
                   <Badge variant="danger" className="text-xs">Out of Stock</Badge>
                 )}
@@ -151,6 +172,7 @@ export default function PricePanel({ partId, onClose }: Props) {
           <p className="text-xs text-gray-600 text-center pt-1">
             Prices are indicative. Verify on retailer websites.
           </p>
+          <MonetizationDisclosure />
         </div>
       )}
     </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import {
@@ -16,6 +16,9 @@ import {
   Shield,
   Share2,
   Download,
+  Store,
+  Wallet,
+  BadgeDollarSign,
   Gauge,
   Bolt,
 } from 'lucide-react'
@@ -24,11 +27,28 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { checkCompatibility } from '@/lib/compatibility'
 import { estimatePerformance, PERFORMANCE_DISCLAIMER } from '@/lib/rendering/performance'
+import { fetchPricing } from '@/lib/runtime/client-data'
 import { isBuildSlotKey, type BuildState, type SavedBuild } from '@/lib/types'
 import { formatAUD } from '@/lib/utils'
+import PartImage from '@/components/build/PartImage'
+import MonetizationDisclosure from '@/components/common/MonetizationDisclosure'
 
 interface Props {
   build: SavedBuild
+}
+
+interface PartPricingSummary {
+  partId: string
+  bestOverall?: {
+    landedCost: number
+    retailerName: string
+    source: 'local' | 'ebay' | 'aliexpress'
+    warrantyRisk: string
+  }
+  bestLocal?: {
+    landedCost: number
+    retailerName: string
+  }
 }
 
 const SLOT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -52,6 +72,7 @@ const FPS_TIERS: Record<string, { label: string; color: string }> = {
 
 export default function BuildShowcase({ build }: Props) {
   const showcaseRef = useRef<HTMLDivElement>(null)
+  const [pricingByPart, setPricingByPart] = useState<Record<string, PartPricingSummary>>({})
 
   const buildState: BuildState = {}
   for (const buildPart of build.buildParts) {
@@ -62,6 +83,80 @@ export default function BuildShowcase({ build }: Props) {
 
   const compatibility = checkCompatibility(buildState)
   const performance = estimatePerformance(buildState)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadPricingSummary() {
+      const rows = await Promise.all(
+        build.buildParts.map(async (buildPart) => {
+          try {
+            const data = await fetchPricing(buildPart.partId)
+            const sorted = [...(data.scores ?? [])].sort(
+              (a, b) => a.listing.landedCost - b.listing.landedCost
+            )
+            const bestOverall = sorted[0]
+            const bestLocal = sorted.find((score) => score.listing.source === 'local')
+
+            return [
+              buildPart.partId,
+              {
+                partId: buildPart.partId,
+                bestOverall: bestOverall
+                  ? {
+                      landedCost: bestOverall.listing.landedCost,
+                      retailerName: bestOverall.listing.retailer.name,
+                      source: bestOverall.listing.source,
+                      warrantyRisk: bestOverall.listing.warrantyRisk,
+                    }
+                  : undefined,
+                bestLocal: bestLocal
+                  ? {
+                      landedCost: bestLocal.listing.landedCost,
+                      retailerName: bestLocal.listing.retailer.name,
+                    }
+                  : undefined,
+              } satisfies PartPricingSummary,
+            ] as const
+          } catch {
+            return [buildPart.partId, { partId: buildPart.partId } satisfies PartPricingSummary] as const
+          }
+        })
+      )
+
+      if (cancelled) {
+        return
+      }
+
+      setPricingByPart(Object.fromEntries(rows))
+    }
+
+    void loadPricingSummary()
+
+    return () => {
+      cancelled = true
+    }
+  }, [build.buildParts])
+
+  const pricingTotals = useMemo(() => {
+    const summaries = Object.values(pricingByPart)
+    const importAssistedTotal = summaries.reduce(
+      (sum, row) => sum + (row.bestOverall?.landedCost ?? 0),
+      0
+    )
+    const localOnlyAvailable = summaries.every((row) => Boolean(row.bestLocal))
+    const localOnlyTotal = localOnlyAvailable
+      ? summaries.reduce((sum, row) => sum + (row.bestLocal?.landedCost ?? 0), 0)
+      : null
+    const estimatedSavings =
+      localOnlyTotal != null ? Math.max(0, localOnlyTotal - importAssistedTotal) : null
+
+    return {
+      importAssistedTotal,
+      localOnlyTotal,
+      estimatedSavings,
+    }
+  }, [pricingByPart])
 
   function handleShare() {
     navigator.clipboard.writeText(window.location.href)
@@ -145,6 +240,55 @@ export default function BuildShowcase({ build }: Props) {
           </div>
         </div>
 
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <Card className="border-white/10 bg-white/5 text-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm text-gray-300">
+                <BadgeDollarSign className="h-4 w-4 text-emerald-400" />
+                Import-assisted Price
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-semibold">{formatAUD(pricingTotals.importAssistedTotal)}</p>
+            </CardContent>
+          </Card>
+          <Card className="border-white/10 bg-white/5 text-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm text-gray-300">
+                <Store className="h-4 w-4 text-blue-400" />
+                Local-only Price
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-semibold">
+                {pricingTotals.localOnlyTotal != null ? formatAUD(pricingTotals.localOnlyTotal) : 'Partial'}
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="border-white/10 bg-white/5 text-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm text-gray-300">
+                <Wallet className="h-4 w-4 text-amber-400" />
+                Estimated Savings
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-semibold text-amber-300">
+                {pricingTotals.estimatedSavings != null ? formatAUD(pricingTotals.estimatedSavings) : 'N/A'}
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="border-white/10 bg-white/5 text-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-gray-300">PSU Headroom</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-semibold">{compatibility.recommendedPsuWatts}W</p>
+              <p className="text-xs text-gray-400">Recommended with wattage headroom</p>
+            </CardContent>
+          </Card>
+        </section>
+
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="space-y-3 lg:col-span-2">
             <h2 className="font-semibold text-gray-100">Components</h2>
@@ -168,6 +312,33 @@ export default function BuildShowcase({ build }: Props) {
                         {buildPart.part.description}
                       </p>
                     )}
+                    <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
+                      {pricingByPart[buildPart.partId]?.bestOverall && (
+                        <span className="rounded border border-emerald-500/40 bg-emerald-950/40 px-2 py-0.5 text-emerald-300">
+                          Best landed: {pricingByPart[buildPart.partId]!.bestOverall!.retailerName}
+                        </span>
+                      )}
+                      {pricingByPart[buildPart.partId]?.bestLocal && (
+                        <span className="rounded border border-blue-500/40 bg-blue-950/40 px-2 py-0.5 text-blue-300">
+                          Best local: {pricingByPart[buildPart.partId]!.bestLocal!.retailerName}
+                        </span>
+                      )}
+                      {pricingByPart[buildPart.partId]?.bestOverall?.source === 'local' && (
+                        <span className="rounded border border-green-500/40 bg-green-950/40 px-2 py-0.5 text-green-300">Local warranty</span>
+                      )}
+                      {pricingByPart[buildPart.partId]?.bestOverall?.source !== 'local' && (
+                        <span className="rounded border border-amber-500/40 bg-amber-950/40 px-2 py-0.5 text-amber-300">Import risk check</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="relative h-16 w-16 overflow-hidden rounded-lg border border-white/10 bg-black/20">
+                    <PartImage
+                      alt={buildPart.part.name}
+                      category={buildPart.part.category.slug}
+                      imageUrl={buildPart.part.imageUrl}
+                      className="object-contain"
+                      sizes="64px"
+                    />
                   </div>
                   <div className="flex shrink-0 flex-wrap gap-1">
                     {buildPart.part.socket && (
@@ -298,6 +469,7 @@ export default function BuildShowcase({ build }: Props) {
           </p>
           <p>Prices and availability are indicative only. Verify with retailers before purchasing.</p>
           <p>{PERFORMANCE_DISCLAIMER}</p>
+          <MonetizationDisclosure className="text-xs text-gray-600" includeNoAdsNote={false} />
         </div>
       </div>
 

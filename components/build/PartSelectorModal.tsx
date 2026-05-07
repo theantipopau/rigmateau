@@ -15,6 +15,7 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import type { Part, BuildSlotKey } from '@/lib/types'
+import { fetchParts } from '@/lib/runtime/client-data'
 import PartImage from './PartImage'
 
 const SLOT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -44,20 +45,15 @@ export default function PartSelectorModal({ slot, category, filters, onSelect, o
 
   useEffect(() => {
     const controller = new AbortController()
-    const q = query ? `&q=${encodeURIComponent(query)}` : ''
-    const filterParams = filters
-      ? Object.entries(filters)
-          .filter(([, value]) => value != null && value !== '')
-          .map(([key, value]) => `&${key}=${encodeURIComponent(value)}`)
-          .join('')
-      : ''
+    const normalizedFilters = Object.fromEntries(
+      Object.entries(filters ?? {}).filter(([, value]) => value != null && value !== '')
+    )
 
     async function loadParts() {
       try {
-        const response = await fetch(`/api/parts?category=${category}${q}${filterParams}`, {
-          signal: controller.signal,
-        })
-        const data = (await response.json()) as { parts?: Part[] }
+        const data = (await fetchParts({ category, q: query || undefined, filters: normalizedFilters })) as {
+          parts?: Part[]
+        }
         if (!controller.signal.aborted) {
           setParts(data.parts ?? [])
           setLoading(false)

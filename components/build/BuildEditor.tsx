@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useState, useEffect, type ComponentType } from 'react'
 import Image from 'next/image'
-import { Cpu, Monitor, HardDrive, Zap, Box, Fan, Thermometer, MemoryStick, X, ChevronRight, Shield, AlertTriangle, CheckCircle2, HelpCircle, Share2, Download, ClipboardCopy, Printer, DollarSign, RotateCcw, Copy, ChevronDown, Lightbulb, Info } from 'lucide-react'
+import { Cpu, Monitor, HardDrive, Zap, Box, Fan, Thermometer, MemoryStick, X, ChevronRight, Shield, AlertTriangle, CheckCircle2, HelpCircle, Share2, Download, ClipboardCopy, Printer, DollarSign, RotateCcw, Copy, ChevronDown, Lightbulb, Info, Sparkles, Store, PackageSearch } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge, type BadgeProps } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,6 +11,8 @@ import { BUILD_SLOT_KEYS, isBuildSlotKey, type BuildState, type Part, type Compa
 import { formatAUD } from '@/lib/utils'
 import { BUILD_TEMPLATES } from '@/lib/templates'
 import type { BuildTemplate } from '@/lib/templates'
+import { fetchCompatibility, fetchParts, fetchPricing, saveBuild } from '@/lib/runtime/client-data'
+import { IS_GITHUB_PAGES, toAbsoluteUrl } from '@/lib/runtime/deploy'
 import PartSelectorModal from './PartSelectorModal'
 import PartImage from './PartImage'
 import CompatibilityPanel from '@/components/build/CompatibilityPanel'
@@ -102,6 +104,9 @@ type SlotPricing = {
   cheapestCost: number
   cheapestRetailer: string
   retailers: Array<{ name: string; landedCost: number }>
+  totalOffers: number
+  supplierCount: number
+  sourceBreakdown: Record<PriceScore['listing']['source'], number>
 }
 
 function getSelectedEntries(build: BuildState): Array<[BuildSlotKey, Part]> {
@@ -283,6 +288,14 @@ export default function BuildEditor() {
   const missingRequiredSlots = requiredSlots.filter(slot => !build[slot.key])
   const buildComplete = missingRequiredSlots.length === 0 && partCount > 0
   const visibleTemplates = BUILD_TEMPLATES.filter(t => templateCategory === 'all' || t.category === templateCategory)
+  const totalIndexedOffers = Object.values(visibleSlotPricing).reduce((sum, pricing) => sum + (pricing?.totalOffers ?? 0), 0)
+  const totalSuppliers = Object.values(visibleSlotPricing).reduce((sum, pricing) => sum + (pricing?.supplierCount ?? 0), 0)
+  const indexedChannels = Object.values(visibleSlotPricing).reduce((set, pricing) => {
+    if (pricing?.sourceBreakdown.local) set.add('Local AU')
+    if (pricing?.sourceBreakdown.ebay) set.add('eBay AU')
+    if (pricing?.sourceBreakdown.aliexpress) set.add('AliExpress')
+    return set
+  }, new Set<string>())
 
   function applyBuild(nextBuild: BuildState) {
     setBuild(nextBuild)
@@ -313,15 +326,7 @@ export default function BuildEditor() {
       const partIds = Object.fromEntries(selectedEntries.map(([slot, part]) => [slot, part.id]))
 
       try {
-        const res = await fetch('/api/compatibility', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ partIds }),
-          signal: controller.signal,
-        })
-        if (!res.ok) return
-
-        const data = (await res.json()) as { report?: CompatibilityReport }
+        const data = await fetchCompatibility(partIds)
         if (!controller.signal.aborted) {
           setCompatibility(data.report ?? null)
         }
@@ -352,14 +357,20 @@ export default function BuildEditor() {
         const rows = await Promise.all(
           selectedEntries.map(async ([slot, part]) => {
             try {
-              const res = await fetch(`/api/pricing?partId=${encodeURIComponent(part.id)}`)
-              if (!res.ok) throw new Error(`HTTP ${res.status}`)
-              const data = (await res.json()) as { scores?: PriceScore[] }
+              const data = (await fetchPricing(part.id)) as { scores?: PriceScore[] }
               const scores = data.scores ?? []
               // Only local AU listings, sorted by landed cost
               const local = scores
                 .filter(s => s.listing.source === 'local')
                 .sort((a, b) => a.listing.landedCost - b.listing.landedCost)
+              const sourceBreakdown: Record<PriceScore['listing']['source'], number> = {
+                local: 0,
+                ebay: 0,
+                aliexpress: 0,
+              }
+              for (const score of scores) {
+                sourceBreakdown[score.listing.source] += 1
+              }
               const allSorted = scores.sort((a, b) => a.listing.landedCost - b.listing.landedCost)
               const cheapest = allSorted[0]
               if (!cheapest) {
@@ -375,6 +386,9 @@ export default function BuildEditor() {
                 cheapestCost: cheapest.listing.landedCost,
                 cheapestRetailer: cheapest.listing.retailer.name,
                 retailers,
+                totalOffers: scores.length,
+                supplierCount: new Set(scores.map((score) => score.listing.retailer.slug)).size,
+                sourceBreakdown,
               }] as const
             } catch {
               errors.add(slot)
@@ -472,10 +486,8 @@ export default function BuildEditor() {
       const partsToLoad = await Promise.all(
         partIds.map(async ([slot, partId]) => {
           try {
-            const res = await fetch(`/api/parts?id=${encodeURIComponent(partId)}`)
-            if (!res.ok) return [slot, null] as const
-            const data = await res.json()
-            return [slot, data.part] as const
+            const data = await fetchParts({ id: partId })
+            return [slot, data.part ?? null] as const
           } catch {
             return [slot, null] as const
           }
@@ -485,12 +497,23 @@ export default function BuildEditor() {
       for (const [slot, part] of partsToLoad) {
         if (part) newBuild[slot] = part
       }
+
+      const loadedCount = Object.keys(newBuild).length
+      if (loadedCount === 0) {
+        alert('Template parts are currently unavailable. Please try another template.')
+        return
+      }
+
       applyBuild(newBuild)
       setTemplateModalOpen(false)
       setSelectingSlot(null)
       setHoveredPartId(null)
+
+      if (loadedCount < partIds.length) {
+        alert(`Loaded ${loadedCount}/${partIds.length} parts. Some parts are not in the active catalog yet.`)
+      }
     } catch {
-      // silent fail
+      alert('Template load failed. Please try again.')
     }
   }
 
@@ -504,14 +527,9 @@ export default function BuildEditor() {
 
     setSaving(true)
     try {
-      const res = await fetch('/api/builds', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, purpose, partIds }),
-      })
-      const data = await res.json()
+      const data = await saveBuild({ name, purpose, partIds })
       if (data.url) {
-        setShareUrl(`${window.location.origin}${data.url}`)
+        setShareUrl(toAbsoluteUrl(data.url))
       }
     } finally {
       setSaving(false)
@@ -552,6 +570,7 @@ export default function BuildEditor() {
   }
 
   function handlePrintExport() {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://rigmate.au'
     const rows = BUILD_SLOTS.map(slot => {
       const part = build[slot.key]
       if (!part) return ''
@@ -561,7 +580,7 @@ export default function BuildEditor() {
       ).join('') ?? ''
       return `<tr style="border-top:1px solid #374151"><td style="padding:8px 16px 4px;color:#9ca3af;font-size:13px;white-space:nowrap">${slot.label}</td><td style="padding:8px 16px 4px;color:#f3f4f6;font-size:13px">${part.name}</td><td style="padding:8px 0 4px;text-align:right;color:#34d399;font-weight:700">${pricing ? formatAUD(pricing.cheapestCost) : '—'}</td></tr>${retailerRows}`
     }).filter(Boolean).join('')
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>RigMate AU Build</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#030712;color:#f3f4f6;padding:40px}h1{font-size:22px;font-weight:700;color:#fff;margin-bottom:4px}h2{font-size:13px;color:#6b7280;font-weight:400;margin-bottom:32px}table{width:100%;border-collapse:collapse}th{padding:8px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;border-bottom:2px solid #374151}th:last-child{text-align:right}.total{margin-top:24px;border-top:2px solid #374151;padding-top:16px;display:flex;justify-content:space-between;align-items:center}.total-label{font-size:14px;color:#9ca3af}.total-price{font-size:24px;font-weight:700;color:#34d399}.meta{margin-top:32px;font-size:11px;color:#4b5563}.compat{display:inline-block;margin-top:8px;padding:3px 10px;border-radius:9999px;font-size:11px;font-weight:600}@media print{body{padding:24px}}</style></head><body><h1>RigMate AU — PC Build</h1><h2>Generated ${new Date().toLocaleString('en-AU', { dateStyle: 'long', timeStyle: 'short' })}</h2><table><thead><tr><th>Component</th><th>Part</th><th style="text-align:right">Best Price (AU)</th></tr></thead><tbody>${rows}</tbody></table><div class="total"><span class="total-label">Estimated Build Total (cheapest per part)</span><span class="total-price">${formatAUD(totalPrice)}</span></div><div class="meta">${compatibility ? `<span>Compatibility: </span><span class="compat" style="background:${compatibility.overallStatus==='compatible'?'#14532d':compatibility.overallStatus==='warning'?'#422006':'#450a0a'};color:${compatibility.overallStatus==='compatible'?'#4ade80':compatibility.overallStatus==='warning'?'#fb923c':'#f87171'}">${compatibility.overallStatus.toUpperCase()}</span>` : ''}<br><br>Prices are indicative. Verify at each retailer before purchasing. RigMate AU — rigmateau.matt-hurley91.workers.dev</div></body></html>`
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>RigMate AU Build</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#030712;color:#f3f4f6;padding:40px}h1{font-size:22px;font-weight:700;color:#fff;margin-bottom:4px}h2{font-size:13px;color:#6b7280;font-weight:400;margin-bottom:32px}table{width:100%;border-collapse:collapse}th{padding:8px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;border-bottom:2px solid #374151}th:last-child{text-align:right}.total{margin-top:24px;border-top:2px solid #374151;padding-top:16px;display:flex;justify-content:space-between;align-items:center}.total-label{font-size:14px;color:#9ca3af}.total-price{font-size:24px;font-weight:700;color:#34d399}.meta{margin-top:32px;font-size:11px;color:#4b5563}.compat{display:inline-block;margin-top:8px;padding:3px 10px;border-radius:9999px;font-size:11px;font-weight:600}@media print{body{padding:24px}}</style></head><body><h1>RigMate AU — PC Build</h1><h2>Generated ${new Date().toLocaleString('en-AU', { dateStyle: 'long', timeStyle: 'short' })}</h2><table><thead><tr><th>Component</th><th>Part</th><th style="text-align:right">Best Price (AU)</th></tr></thead><tbody>${rows}</tbody></table><div class="total"><span class="total-label">Estimated Build Total (cheapest per part)</span><span class="total-price">${formatAUD(totalPrice)}</span></div><div class="meta">${compatibility ? `<span>Compatibility: </span><span class="compat" style="background:${compatibility.overallStatus==='compatible'?'#14532d':compatibility.overallStatus==='warning'?'#422006':'#450a0a'};color:${compatibility.overallStatus==='compatible'?'#4ade80':compatibility.overallStatus==='warning'?'#fb923c':'#f87171'}">${compatibility.overallStatus.toUpperCase()}</span>` : ''}<br><br>Prices are indicative. Verify at each retailer before purchasing. RigMate AU — ${origin}</div></body></html>`
     const w = window.open('', '_blank', 'width=900,height=700')
     if (!w) return
     w.document.write(html)
@@ -669,7 +688,50 @@ export default function BuildEditor() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl px-4 py-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 pb-24 sm:pb-8">
+        {IS_GITHUB_PAGES && (
+          <section className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+            Static mode is active. Save and Share creates a URL-encoded showcase link instead of server-side build storage.
+          </section>
+        )}
+
+        <section className="mb-6 overflow-hidden rounded-2xl border border-cyan-500/20 bg-[radial-gradient(circle_at_10%_10%,rgba(34,211,238,0.2),transparent_35%),radial-gradient(circle_at_90%_5%,rgba(59,130,246,0.2),transparent_35%),linear-gradient(180deg,rgba(17,24,39,0.94),rgba(3,7,18,0.94))] p-4 sm:p-5">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+              <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-wider text-cyan-300/80">
+                <PackageSearch className="h-3.5 w-3.5" />
+                Offers Indexed
+              </div>
+              <p className="text-2xl font-semibold text-white">{totalIndexedOffers}</p>
+              <p className="text-xs text-gray-400">Across selected components</p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+              <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-wider text-emerald-300/80">
+                <Store className="h-3.5 w-3.5" />
+                Supplier Reach
+              </div>
+              <p className="text-2xl font-semibold text-white">{totalSuppliers}</p>
+              <p className="text-xs text-gray-400">Retailers and marketplaces</p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+              <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-wider text-blue-300/80">
+                <Sparkles className="h-3.5 w-3.5" />
+                Market Channels
+              </div>
+              <p className="text-2xl font-semibold text-white">{indexedChannels.size}</p>
+              <p className="text-xs text-gray-400">{indexedChannels.size > 0 ? Array.from(indexedChannels).join(' | ') : 'Select parts to compare channels'}</p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+              <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-wider text-violet-300/80">
+                <DollarSign className="h-3.5 w-3.5" />
+                Est. Cheapest Total
+              </div>
+              <p className="text-2xl font-semibold text-white">{formatAUD(totalPrice)}</p>
+              <p className="text-xs text-gray-400">Live and projected AU pricing</p>
+            </div>
+          </div>
+        </section>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Build Slots */}
           <div className="lg:col-span-2 space-y-3">
@@ -680,7 +742,7 @@ export default function BuildEditor() {
               return (
                 <div
                   key={slot.key}
-                  className={`group relative flex items-center gap-4 rounded-xl border p-4 transition-all cursor-pointer
+                  className={`group relative flex flex-col items-start gap-3 rounded-xl border p-4 transition-all cursor-pointer sm:flex-row sm:items-center sm:gap-4
                     ${selectedPart
                       ? 'border-white/20 bg-white/5 hover:border-blue-500/50'
                       : 'border-dashed border-white/10 hover:border-white/30 hover:bg-white/[0.02]'
@@ -755,6 +817,10 @@ export default function BuildEditor() {
                               </span>
                             ))}
                           </div>
+                        ) : visibleSlotPricing[slot.key]?.totalOffers ? (
+                          <p className="text-xs text-sky-300 mt-1">
+                            {visibleSlotPricing[slot.key]!.totalOffers} offers from {visibleSlotPricing[slot.key]!.supplierCount} suppliers
+                          </p>
                         ) : visiblePriceErrors.has(slot.key) ? (
                           <p className="text-xs text-red-400 mt-1">
                             Price lookup failed
@@ -778,7 +844,7 @@ export default function BuildEditor() {
                   </div>
 
                   {selectedPart ? (
-                    <div className="flex flex-wrap items-center justify-end gap-2 shrink-0">
+                    <div className="flex w-full flex-wrap items-center justify-end gap-2 shrink-0 sm:w-auto">
                       <button
                         onClick={(e) => { e.stopPropagation(); setActivePricePartId(activePricePartId === selectedPart.id ? null : selectedPart.id) }}
                         className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 px-2 py-1 rounded border border-blue-500/30 hover:border-blue-500/60 transition-colors"
@@ -936,6 +1002,40 @@ export default function BuildEditor() {
               </Card>
             )}
           </div>
+        </div>
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-gray-950/95 p-3 backdrop-blur sm:hidden">
+        <div className="mx-auto flex max-w-7xl items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setTemplateModalOpen(true)}
+            className="flex-1 border-white/20 text-white hover:bg-white/10"
+          >
+            <Lightbulb className="h-4 w-4" />
+            Templates
+          </Button>
+          {shareUrl ? (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => { navigator.clipboard.writeText(shareUrl); alert('Link copied!') }}
+              className="flex-1 border-white/20 text-white hover:bg-white/10"
+            >
+              <Share2 className="h-4 w-4" />
+              Share
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              onClick={handleSaveBuild}
+              disabled={partCount < 2 || saving}
+              className="flex-1 bg-orange-600 hover:bg-orange-500"
+            >
+              {saving ? 'Saving...' : 'Save Build'}
+            </Button>
+          )}
         </div>
       </div>
 
