@@ -1,6 +1,4 @@
-// RigMate AU – Core TypeScript Types
-
-// ─── Category ────────────────────────────────────────────────────────────────
+// RigMate AU - Core TypeScript types
 
 export type CategorySlug =
   | 'cpu'
@@ -22,8 +20,6 @@ export interface Category {
   safeImport: boolean
 }
 
-// ─── Part ────────────────────────────────────────────────────────────────────
-
 export interface Part {
   id: string
   categoryId: string
@@ -35,7 +31,6 @@ export interface Part {
   imageUrl?: string
   description?: string
 
-  // Compatibility fields
   socket?: string
   chipset?: string
   ramType?: string
@@ -46,18 +41,15 @@ export interface Part {
   heightMm?: number
   widthMm?: number
 
-  // Power
   tdpWatts?: number
   psuWatts?: number
   psuFormFactor?: string
 
-  // Performance
   benchmarkScore?: number
   fps1080p?: number
   fps1440p?: number
   fps4K?: number
 
-  // Specs
   cores?: number
   threads?: number
   boostClockMhz?: number
@@ -69,9 +61,8 @@ export interface Part {
   listings?: Listing[]
 }
 
-// ─── Retailer ────────────────────────────────────────────────────────────────
-
 export type ListingSource = 'local' | 'ebay' | 'aliexpress'
+export type ListingCoverage = 'live' | 'projected'
 
 export interface Retailer {
   id: string
@@ -83,15 +74,13 @@ export interface Retailer {
   logoUrl?: string
 }
 
-// ─── Seller / Trust ──────────────────────────────────────────────────────────
-
 export interface SellerTrustScore {
-  rating: number         // 0–5
+  rating: number
   reviewCount: number
   orderCount?: number
   positivePercent?: number
   shipsToAU: boolean
-  score: number          // 0–100
+  score: number
 }
 
 export interface Seller {
@@ -103,8 +92,6 @@ export interface Seller {
   trustScore?: SellerTrustScore
 }
 
-// ─── Listing ─────────────────────────────────────────────────────────────────
-
 export interface Listing {
   id: string
   partId: string
@@ -112,30 +99,27 @@ export interface Listing {
   seller?: Seller
   url?: string
   affiliateUrl?: string
-  price: number          // AUD
-  shipping: number       // AUD
+  price: number
+  shipping: number
   currency: string
   inStock: boolean
   condition: 'new' | 'used' | 'refurbished'
   source: ListingSource
+  coverage?: ListingCoverage
   deliveryDays?: number
   warrantyMonths?: number
 }
-
-// ─── Enriched Listing (pricing engine output) ────────────────────────────────
 
 export type WarrantyRisk = 'low' | 'medium' | 'high' | 'very-high'
 
 export interface EnrichedListing extends Listing {
   landedCost: number
-  trustScore: number        // 0–100
-  valueScore: number        // 0–100
+  trustScore: number
+  valueScore: number
   warrantyRisk: WarrantyRisk
-  worthImporting?: boolean  // only for aliexpress
+  worthImporting?: boolean
   recommendation: string
 }
-
-// ─── Build ───────────────────────────────────────────────────────────────────
 
 export type BuildSlotKey =
   | 'cpu'
@@ -196,31 +180,26 @@ export interface SavedBuild extends Build {
   buildParts: SavedBuildPart[]
 }
 
-// Keyed build state used in the UI
 export type BuildState = Partial<Record<BuildSlotKey, Part>>
-
-// ─── Build Templates ─────────────────────────────────────────────────────────
 
 export interface BuildTemplate {
   id: string
   name: string
   description: string
   category: 'gaming' | 'workstation' | 'budget' | 'streaming' | 'content-creation'
-  estimatedPrice: number // AUD, approximate
+  estimatedPrice: number
   performance?: string
-  parts: Partial<Record<BuildSlotKey, string>> // part IDs
+  parts: Partial<Record<BuildSlotKey, string>>
 }
-
-// ─── Compatibility ───────────────────────────────────────────────────────────
 
 export type CompatibilityStatus = 'compatible' | 'incompatible' | 'warning' | 'unknown'
 
 export interface CompatibilityResult {
   status: CompatibilityStatus
-  rule: string        // human-readable rule name
+  rule: string
   explanation: string
   severity: 'error' | 'warning' | 'info'
-  parts: string[]     // part names involved
+  parts: string[]
 }
 
 export interface CompatibilityReport {
@@ -230,8 +209,6 @@ export interface CompatibilityReport {
   recommendedPsuWatts: number
 }
 
-// ─── Performance ─────────────────────────────────────────────────────────────
-
 export interface PerformanceEstimate {
   fps1080p?: number
   fps1440p?: number
@@ -239,8 +216,6 @@ export interface PerformanceEstimate {
   tier: 'entry' | 'mid' | 'high' | 'ultra'
   disclaimer: string
 }
-
-// ─── Price Scoring ───────────────────────────────────────────────────────────
 
 export interface PriceScore {
   listing: EnrichedListing
@@ -253,8 +228,22 @@ export interface PriceScore {
     deliverySpeed: number
     categoryRisk: number
   }
-  totalScore: number // 0–100
+  totalScore: number
   verdict: 'excellent' | 'good' | 'fair' | 'avoid'
   worthImporting: boolean
   summary: string
+}
+
+export interface PriceCoverageSummary {
+  totalOffers: number
+  localOfferCount: number
+  localRetailerCount: number
+  importOfferCount: number
+  projectedOfferCount: number
+  sources: ListingSource[]
+  bestLocalLandedCost?: number
+  bestOverallLandedCost?: number
+  recommendedChannel: 'local' | 'ebay' | 'aliexpress' | 'mixed' | 'none'
+  recommendation: string
+  aliexpressRisk?: 'safe' | 'risky'
 }
