@@ -13,6 +13,22 @@ const TARGET_LOCAL_COVERAGE = 7
 
 const PROJECTED_LOCAL_RETAILERS: Retailer[] = [
   {
+    id: 'umart',
+    name: 'Umart',
+    slug: 'umart',
+    url: 'https://www.umart.com.au',
+    country: 'AU',
+    source: 'local',
+  },
+  {
+    id: 'msy',
+    name: 'MSY Technology',
+    slug: 'msy',
+    url: 'https://www.msy.com.au',
+    country: 'AU',
+    source: 'local',
+  },
+  {
     id: 'amazon-au',
     name: 'Amazon AU',
     slug: 'amazon-au',
@@ -87,6 +103,8 @@ const PROJECTED_LOCAL_RETAILERS: Retailer[] = [
 ]
 
 const RETAILER_MULTIPLIERS: Record<string, { priceFactor: number; shipping: number; deliveryDays: number }> = {
+  umart: { priceFactor: 0.995, shipping: 0, deliveryDays: 3 },
+  msy: { priceFactor: 0.992, shipping: 0, deliveryDays: 2 },
   'amazon-au': { priceFactor: 1.02, shipping: 0, deliveryDays: 3 },
   mwave: { priceFactor: 1.01, shipping: 9, deliveryDays: 4 },
   jw: { priceFactor: 1.015, shipping: 11, deliveryDays: 4 },

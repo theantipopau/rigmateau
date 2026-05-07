@@ -383,7 +383,7 @@ export default function BuildEditor() {
                 errors.add(slot)
                 return [slot, null] as const
               }
-              const retailers = local.slice(0, 5).map(s => ({
+              const retailers = local.slice(0, 7).map(s => ({
                 name: s.listing.retailer.name,
                 landedCost: s.listing.landedCost,
               }))
