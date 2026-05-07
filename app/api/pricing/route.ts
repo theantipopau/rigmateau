@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPricedListings, summarizePriceCoverage } from '@/lib/pricing'
-import { IS_GITHUB_PAGES } from '@/lib/runtime/deploy'
+import { USE_STATIC_DATA } from '@/lib/runtime/deploy'
 import { getStaticPartById } from '@/lib/static/catalog'
 
 export const runtime = 'nodejs'
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const part = IS_GITHUB_PAGES
+    const part = USE_STATIC_DATA
       ? getStaticPartById(partId)
       : await (async () => {
           const { getDb } = await import('@/lib/db')

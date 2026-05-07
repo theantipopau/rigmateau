@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { IS_GITHUB_PAGES } from '@/lib/runtime/deploy'
+import { USE_STATIC_DATA } from '@/lib/runtime/deploy'
 import { getStaticPartById, getStaticParts } from '@/lib/static/catalog'
 
 export const runtime = 'nodejs'
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
   if (filterPsuFormFactor) compatWhere.psuFormFactorFilter = filterPsuFormFactor
 
   try {
-    if (IS_GITHUB_PAGES) {
+    if (USE_STATIC_DATA) {
       if (partId) {
         const part = getStaticPartById(partId)
         if (!part) {

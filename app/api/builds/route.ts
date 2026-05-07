@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import type { PartWithCategory } from '@/lib/types'
 import { z } from 'zod'
 import { slugify } from '@/lib/utils'
-import { IS_GITHUB_PAGES } from '@/lib/runtime/deploy'
+import { USE_STATIC_DATA } from '@/lib/runtime/deploy'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-static'
@@ -14,7 +14,7 @@ const CreateBuildSchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
-  if (IS_GITHUB_PAGES) {
+  if (USE_STATIC_DATA) {
     return NextResponse.json(
       { error: 'Build persistence API is unavailable in static mode' },
       { status: 405 }
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  if (IS_GITHUB_PAGES) {
+  if (USE_STATIC_DATA) {
     return NextResponse.json(
       { error: 'Build fetch API is unavailable in static mode' },
       { status: 405 }

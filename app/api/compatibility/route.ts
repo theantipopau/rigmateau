@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkCompatibility } from '@/lib/compatibility'
 import { isBuildSlotKey, type BuildState } from '@/lib/types'
-import { IS_GITHUB_PAGES } from '@/lib/runtime/deploy'
+import { USE_STATIC_DATA } from '@/lib/runtime/deploy'
 import { getStaticPartById } from '@/lib/static/catalog'
 
 export const runtime = 'nodejs'
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { partIds } = body as { partIds: Record<string, string> }
 
-    const parts = IS_GITHUB_PAGES
+    const parts = USE_STATIC_DATA
       ? Object.values(partIds)
           .map((id) => getStaticPartById(id))
           .filter((part): part is NonNullable<typeof part> => Boolean(part))

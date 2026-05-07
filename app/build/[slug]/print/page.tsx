@@ -15,8 +15,19 @@ export default async function BuildPrintPage({ params }: Props) {
   const { slug } = await params
   const staticBuild = getStaticSampleBuildBySlug(slug)
 
+  if (staticBuild) {
+    const snapshot = await getBuildExportSnapshot(staticBuild)
+
+    return (
+      <>
+        <AutoPrint />
+        <BuildPrintView build={staticBuild} snapshot={snapshot} />
+      </>
+    )
+  }
+
   const build = IS_GITHUB_PAGES
-    ? staticBuild
+    ? null
     : await (async () => {
         const { getDb } = await import('@/lib/db')
         const db = await getDb()
@@ -24,16 +35,6 @@ export default async function BuildPrintPage({ params }: Props) {
       })()
 
   if (!build || !build.isPublic) {
-    if (staticBuild) {
-      const snapshot = await getBuildExportSnapshot(staticBuild)
-
-      return (
-        <>
-          <AutoPrint />
-          <BuildPrintView build={staticBuild} snapshot={snapshot} />
-        </>
-      )
-    }
     notFound()
   }
 

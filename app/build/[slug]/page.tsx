@@ -15,11 +15,12 @@ export default async function BuildPage({ params }: Props) {
 
   const staticBuild = getStaticSampleBuildBySlug(slug)
 
-  if (IS_GITHUB_PAGES) {
-    if (!staticBuild) {
-      notFound()
-    }
+  if (staticBuild) {
     return <BuildShowcase build={staticBuild} />
+  }
+
+  if (IS_GITHUB_PAGES) {
+    notFound()
   }
 
   const { getDb } = await import('@/lib/db')
@@ -44,14 +45,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const staticBuild = getStaticSampleBuildBySlug(slug)
 
-  if (IS_GITHUB_PAGES) {
-    if (!staticBuild) {
-      return {}
-    }
+  if (staticBuild) {
     return {
       title: `${staticBuild.name} - RigMate AU`,
       description: `Check out this ${staticBuild.purpose ?? 'PC build'} on RigMate AU`,
     }
+  }
+
+  if (IS_GITHUB_PAGES) {
+    return {}
   }
 
   const { getDb } = await import('@/lib/db')
@@ -59,12 +61,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const build = await db.build.findUnique({ where: { slug } })
 
   if (!build) {
-    if (staticBuild) {
-      return {
-        title: `${staticBuild.name} - RigMate AU`,
-        description: `Check out this ${staticBuild.purpose ?? 'PC build'} on RigMate AU`,
-      }
-    }
     return {}
   }
 

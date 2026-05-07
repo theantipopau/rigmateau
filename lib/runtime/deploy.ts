@@ -6,6 +6,8 @@ export const DEPLOY_TARGET: DeployTarget =
   RAW_TARGET === 'github-pages' ? 'github-pages' : 'cloudflare'
 
 export const IS_GITHUB_PAGES = DEPLOY_TARGET === 'github-pages'
+export const IS_BUILD_TIME = process.env.NEXT_PHASE === 'phase-production-build'
+export const USE_STATIC_DATA = IS_GITHUB_PAGES || IS_BUILD_TIME
 
 const RAW_BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH
 
