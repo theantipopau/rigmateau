@@ -6,7 +6,7 @@ const configuredBasePath = process.env.NEXT_PUBLIC_BASE_PATH ?? (isGithubPages ?
 
 const nextConfig: NextConfig = {
   experimental: {},
-  output: isGithubPages ? 'export' : undefined,
+  output: isGithubPages ? 'export' : 'standalone',
   trailingSlash: isGithubPages,
   basePath: configuredBasePath || undefined,
   assetPrefix: configuredBasePath || undefined,

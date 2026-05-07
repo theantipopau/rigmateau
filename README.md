@@ -4,8 +4,8 @@ RigMate AU is an Australia-focused PC builder and price-comparison platform with
 
 ## Deployment targets
 
-- Primary target: GitHub Pages static site
-- Secondary target: Cloudflare Pages/Workers with D1, KV, and R2
+- Primary target: Cloudflare Workers via OpenNext
+- Secondary target: GitHub Pages static export fallback
 
 The codebase now supports deployment mode switching with:
 
@@ -87,6 +87,25 @@ Live scraping is intentionally not implemented yet.
 - npm run pages:deploy: Cloudflare deploy
 - npm run cf:build: Cloudflare build alias
 
+## Cloudflare deployment
+
+Primary workflow file:
+
+- .github/workflows/deploy-cloudflare.yml
+
+Expected GitHub secrets:
+
+- CLOUDFLARE_API_TOKEN
+- CLOUDFLARE_ACCOUNT_ID
+
+It:
+
+- installs dependencies
+- generates Prisma client output
+- runs lint
+- builds the OpenNext bundle
+- deploys with Wrangler when Cloudflare secrets are configured
+
 ## GitHub Pages deployment
 
 The workflow file is:
@@ -95,9 +114,8 @@ The workflow file is:
 
 It:
 
-- installs dependencies
-- runs lint
-- builds in github-pages mode
+- is left as a manual fallback path
+- builds in github-pages mode when triggered manually
 - publishes out directory to GitHub Pages
 
 Required static hosting support files:
