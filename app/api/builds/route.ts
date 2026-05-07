@@ -5,7 +5,7 @@ import { slugify } from '@/lib/utils'
 import { USE_STATIC_DATA } from '@/lib/runtime/deploy'
 
 export const runtime = 'nodejs'
-export const dynamic = 'force-static'
+export const dynamic = 'force-dynamic'
 
 const CreateBuildSchema = z.object({
   name: z.string().min(1).max(100),

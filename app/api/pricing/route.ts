@@ -4,7 +4,7 @@ import { USE_STATIC_DATA } from '@/lib/runtime/deploy'
 import { getStaticPartById } from '@/lib/static/catalog'
 
 export const runtime = 'nodejs'
-export const dynamic = 'force-static'
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)

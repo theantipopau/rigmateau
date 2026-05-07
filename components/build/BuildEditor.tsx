@@ -36,6 +36,12 @@ const BUILD_SLOTS: Array<{
   { key: 'fan', label: 'Case Fans', icon: Fan, category: 'fan', required: false },
 ]
 
+function matchesSlotCategory(slot: BuildSlotKey, part: Part): boolean {
+  const expectedCategory = BUILD_SLOTS.find((entry) => entry.key === slot)?.category
+  if (!expectedCategory) return false
+  return part.category?.slug === expectedCategory
+}
+
 function StatusIcon({ status }: { status: CompatibilityReport['overallStatus'] }) {
   switch (status) {
     case 'compatible': return <CheckCircle2 className="h-5 w-5 text-green-500" />
@@ -425,6 +431,10 @@ export default function BuildEditor() {
   }, [build, partCount])
 
   function handleSelectPart(slot: BuildSlotKey, part: Part) {
+    if (!matchesSlotCategory(slot, part)) {
+      alert(`That part belongs in ${part.category.name}, not ${slot}. Please choose a matching part.`)
+      return
+    }
     applyBuild({ ...build, [slot]: part })
     setSelectingSlot(null)
   }
@@ -495,7 +505,9 @@ export default function BuildEditor() {
       )
       const newBuild: BuildState = {}
       for (const [slot, part] of partsToLoad) {
-        if (part) newBuild[slot] = part
+        if (part && matchesSlotCategory(slot, part)) {
+          newBuild[slot] = part
+        }
       }
 
       const loadedCount = Object.keys(newBuild).length

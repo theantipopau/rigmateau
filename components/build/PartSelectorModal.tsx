@@ -55,7 +55,8 @@ export default function PartSelectorModal({ slot, category, filters, onSelect, o
           parts?: Part[]
         }
         if (!controller.signal.aborted) {
-          setParts(data.parts ?? [])
+          const filteredParts = (data.parts ?? []).filter((part) => part.category?.slug === category)
+          setParts(filteredParts)
           setLoading(false)
         }
       } catch {

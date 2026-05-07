@@ -3,7 +3,7 @@ import { USE_STATIC_DATA } from '@/lib/runtime/deploy'
 import { getStaticPartById, getStaticParts } from '@/lib/static/catalog'
 
 export const runtime = 'nodejs'
-export const dynamic = 'force-static'
+export const dynamic = 'force-dynamic'
 
 const FF_HIERARCHY: Record<string, number> = { ITX: 1, mATX: 2, ATX: 3, 'E-ATX': 4 }
 

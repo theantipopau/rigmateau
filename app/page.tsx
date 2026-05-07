@@ -10,9 +10,17 @@ export default function Home() {
           <Link href='/' className='flex items-center'>
             <Image src='/headerlogo.PNG' alt='RigMate AU' width={200} height={44} className='h-11 w-auto' priority />
           </Link>
-          <Link href='/builder' className='text-sm bg-orange-600 hover:bg-orange-500 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5'>
-            Start Building <ArrowRight className='h-4 w-4' />
-          </Link>
+          <div className='flex items-center gap-2'>
+            <Link href='/about' className='text-sm border border-white/20 hover:border-white/40 text-white px-3 py-2 rounded-lg transition-colors'>
+              About
+            </Link>
+            <a href='https://www.tinyurl.com/omencoredonate' target='_blank' rel='noopener noreferrer' className='text-sm border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 px-3 py-2 rounded-lg transition-colors'>
+              Donate
+            </a>
+            <Link href='/builder' className='text-sm bg-orange-600 hover:bg-orange-500 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5'>
+              Start Building <ArrowRight className='h-4 w-4' />
+            </Link>
+          </div>
         </div>
       </nav>
       <section className='relative overflow-hidden py-20 md:py-32 px-4'>
@@ -64,6 +72,11 @@ export default function Home() {
           <div className='flex items-center gap-2'>
             <Image src='/icon.PNG' alt='RigMate AU' width={28} height={28} className='h-7 w-auto' />
             <span>RigMate AU</span>
+          </div>
+          <div className='flex items-center gap-4'>
+            <Link href='/about' className='hover:text-gray-300 transition-colors'>About</Link>
+            <a href='https://matthurley.dev' target='_blank' rel='noopener noreferrer' className='hover:text-gray-300 transition-colors'>Developer</a>
+            <a href='https://www.tinyurl.com/omencoredonate' target='_blank' rel='noopener noreferrer' className='text-emerald-300 hover:text-emerald-200 transition-colors'>Donate</a>
           </div>
           <p>Prices are indicative. Always verify on retailer websites.</p>
         </div>

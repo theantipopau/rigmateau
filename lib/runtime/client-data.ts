@@ -31,6 +31,14 @@ interface SaveBuildResult {
 const textEncoder = new TextEncoder()
 const textDecoder = new TextDecoder()
 
+async function readJsonOrThrow<T>(response: Response, defaultMessage: string): Promise<T> {
+  const payload = (await response.json()) as { error?: string }
+  if (!response.ok) {
+    throw new Error(payload?.error ?? defaultMessage)
+  }
+  return payload as T
+}
+
 const FF_HIERARCHY: Record<string, number> = { ITX: 1, mATX: 2, ATX: 3, 'E-ATX': 4 }
 
 function allowedFormFactors(maxFormFactor: string): string[] {
@@ -107,7 +115,10 @@ export async function fetchParts(query: PartQuery): Promise<{ part?: PartWithCat
       if (value) params.set(key, value)
     }
     const response = await fetch(`${withBasePath('/api/parts')}?${params.toString()}`)
-    return response.json()
+    return readJsonOrThrow<{ part?: PartWithCategory; parts?: PartWithCategory[] }>(
+      response,
+      'Failed to fetch parts'
+    )
   }
 
   if (query.id) {
@@ -136,7 +147,10 @@ export async function fetchParts(query: PartQuery): Promise<{ part?: PartWithCat
 export async function fetchPricing(partId: string): Promise<{ scores: PriceScore[]; coverage: PriceCoverageSummary }> {
   if (!IS_GITHUB_PAGES) {
     const response = await fetch(`${withBasePath('/api/pricing')}?partId=${encodeURIComponent(partId)}`)
-    return response.json()
+    return readJsonOrThrow<{ scores: PriceScore[]; coverage: PriceCoverageSummary }>(
+      response,
+      'Failed to fetch pricing'
+    )
   }
 
   const part = getStaticPartById(partId)
@@ -159,7 +173,7 @@ export async function fetchCompatibility(partIds: Record<string, string>): Promi
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ partIds }),
     })
-    return response.json()
+    return readJsonOrThrow<{ report: CompatibilityReport }>(response, 'Failed to check compatibility')
   }
 
   const buildState: BuildState = {}
@@ -179,7 +193,7 @@ export async function saveBuild(input: SaveBuildInput): Promise<SaveBuildResult>
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
     })
-    const data = (await response.json()) as { url?: string }
+    const data = await readJsonOrThrow<{ url?: string }>(response, 'Failed to save build')
     return { url: data.url ?? '/showcase' }
   }
 
