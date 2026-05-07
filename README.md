@@ -1,185 +1,135 @@
 # RigMate AU
 
-<p align="center">
-  <img src="./public/headerlogo.PNG" alt="RigMate AU logo" width="420" />
-</p>
+RigMate AU is an Australia-focused PC builder and price-comparison platform with compatibility checks, trust-aware marketplace scoring, and premium shareable build pages.
 
-<p align="center">
-  Australia-first PC build planning with compatibility checks, marketplace trust signals, and shareable showcase pages.
-</p>
+## Deployment targets
 
-<p align="center">
-  <img src="./public/Mockup.png" alt="RigMate AU app mockup" width="900" />
-</p>
+- Primary target: GitHub Pages static site
+- Secondary target: Cloudflare Pages/Workers with D1, KV, and R2
 
-<p align="center">
-  <img alt="Next.js 16" src="https://img.shields.io/badge/Next.js-16.2-black?style=for-the-badge&logo=next.js" />
-  <img alt="React 19" src="https://img.shields.io/badge/React-19-149ECA?style=for-the-badge&logo=react" />
-  <img alt="Cloudflare" src="https://img.shields.io/badge/Cloudflare-Workers-F38020?style=for-the-badge&logo=cloudflare" />
-  <img alt="Prisma" src="https://img.shields.io/badge/Prisma-ORM-2D3748?style=for-the-badge&logo=prisma" />
-</p>
+The codebase now supports deployment mode switching with:
 
-## What It Is
+- NEXT_PUBLIC_DEPLOY_TARGET=github-pages
+- NEXT_PUBLIC_DEPLOY_TARGET=cloudflare
 
-RigMate AU is a prototype web app for Australian PC builders who want more than a generic part picker. It focuses on the local buying experience:
+## Source policy and exclusions
 
-- compare seeded AU retailer, eBay AU, and AliExpress listings
-- flag risky import categories before people save a few dollars in the wrong place
-- surface compatibility issues early while a build is still taking shape
-- generate a polished public build page that is easier to share than a spreadsheet
+RigMate AU explicitly excludes OzBargain and Whirlpool from provider logic and product data pipelines.
 
-> Current status: the product experience is real, but the pricing providers in this repo are still mock/seeded data sources designed to model the marketplace workflow and scoring system.
+- No scraping
+- No importing content
+- No linking as data providers
+- No pricing ingestion
 
-## Core Features
+These sites may inform general product direction, but are never part of the app data source system.
 
-| Area | What it does |
-| --- | --- |
-| Builder flow | Select CPUs, motherboards, RAM, GPUs, storage, PSUs, cases, coolers, and fans in a guided editor |
-| Compatibility engine | Checks socket, RAM type, form factor, GPU clearance, cooler height, PSU fit, BIOS warnings, and wattage headroom |
-| AU price view | Aggregates seeded listings from Scorptec, PC Case Gear, PLE, MSY, Umart, eBay AU, and AliExpress |
-| Trust scoring | Adds landed cost, seller trust, warranty risk, delivery speed, and import safety signals |
-| Templates | Load prebuilt starter rigs for gaming, workstation, streaming, budget, and content creation use cases |
-| Showcase pages | Save a build to a public route with compatibility summary, estimated performance, and print-to-PDF output |
+## Static mode behavior (GitHub Pages)
 
-## Why The Angle Matters
+In github-pages mode:
 
-Most PC builder tools are US-centric. RigMate AU tries to answer the questions local buyers actually ask:
+- Next.js output export is used
+- static seed/catalog data is used client-side
+- compatibility checks run client-side
+- pricing and trust scoring run client-side on mock providers
+- print-to-PDF is browser-based
+- server-only runtime features are avoided
 
-- Is this part really cheaper once shipping lands in AUD?
-- Is AliExpress safe for this category, or is local warranty worth the premium?
-- Will this GPU/cooler/case combination physically fit?
-- Can I send a clean public build page to a friend without explaining every line item?
+Static mode limitations:
 
-## Tech Stack
+- no API routes at runtime
+- no server DB access
+- no live scraping
+- no live background jobs
 
-- Next.js 16 App Router
-- React 19
-- TypeScript
-- Tailwind CSS 4
-- Prisma ORM
-- SQLite for local development
-- Cloudflare D1 + OpenNext for deployment
-- Wrangler for edge deployment and local Cloudflare previews
+## Cloudflare mode behavior
 
-## Project Structure
+In cloudflare mode:
 
-```text
-app/
-  api/                  API routes for parts, pricing, compatibility, and builds
-  builder/              Interactive builder page
-  build/[slug]/         Public build showcase page
-components/
-  build/                Builder UI, selectors, showcase, compatibility cards
-  pricing/              Listing score and retailer price views
-lib/
-  compatibility/        Rule-based build validation
-  pricing/              Listing enrichment and score calculation
-  providers/            Marketplace provider interfaces and mock providers
-prisma/
-  schema.prisma         Data model
-  seed.ts               Seeded AU catalog and pricing fixtures
-scripts/
-  dump-to-d1.mjs        Export local SQLite data into D1-friendly SQL
-```
+- API routes and dynamic build persistence remain available
+- architecture remains ready for D1, R2, KV, and OpenNext runtime
+- provider interfaces are preserved for future official integrations
 
-## Local Development
+## Supported provider direction
 
-### 1. Install dependencies
+Mock/seed architecture is prepared for:
 
-```bash
-npm install
-```
+- Scorptec
+- Mwave
+- PC Case Gear
+- Umart
+- Centre Com
+- Computer Alliance
+- PLE Computers
+- MSY
+- JW Computers
+- Amazon AU
+- eBay AU
+- AliExpress
 
-### 2. Start the app
+Live scraping is intentionally not implemented yet.
 
-```bash
-npm run dev
-```
+## Data sourcing and legal notes
 
-Open `http://localhost:3000`.
-
-### 3. Optional database tasks
-
-```bash
-npm run db:migrate
-npm run db:seed
-npm run db:studio
-```
-
-Notes:
-
-- Local development uses SQLite.
-- The repo already includes a `dev.db` file for quick startup.
-- Prisma client output is generated into `app/generated/prisma`.
+- Respect retailer terms of service and robots.txt
+- Prefer official APIs, affiliate feeds, and approved partnerships
+- Do not scrape Google Images for product media
+- Use local assets, approved manufacturer media, or mock image paths
 
 ## Scripts
 
-| Command | Purpose |
-| --- | --- |
-| `npm run dev` | Run the Next.js app locally |
-| `npm run build` | Production build |
-| `npm run start` | Start the production server |
-| `npm run lint` | Run ESLint |
-| `npm run db:migrate` | Apply Prisma migrations in development |
-| `npm run db:seed` | Seed the catalog and mock listing data |
-| `npm run db:studio` | Open Prisma Studio |
-| `npm run pages:build` | Build for OpenNext/Cloudflare |
-| `npm run pages:preview` | Preview the OpenNext worker locally |
-| `npm run pages:deploy` | Build and deploy to Cloudflare |
+- npm run dev: local dev server
+- npm run build: default build
+- npm run build:github-pages: static build path used by GitHub Pages workflow
+- npm run deploy:github-pages: alias for static build
+- npm run lint: ESLint
+- npm run pages:build: OpenNext Cloudflare build
+- npm run pages:preview: local Cloudflare preview
+- npm run pages:deploy: Cloudflare deploy
+- npm run cf:build: Cloudflare build alias
 
-## Cloudflare Deployment
+## GitHub Pages deployment
 
-The project is wired for Cloudflare Workers through OpenNext and `wrangler.toml`.
+The workflow file is:
 
-### Main runtime pieces
+- .github/workflows/deploy-pages.yml
 
-- D1 database binding: `DB`
-- R2 bucket binding: `R2_STORAGE`
-- KV namespace binding: `PRICE_CACHE`
+It:
 
-### Helpful commands
+- installs dependencies
+- runs lint
+- builds in github-pages mode
+- publishes out directory to GitHub Pages
 
-```bash
-npm run pages:build
-npm run pages:preview
-npm run pages:deploy
-```
+Required static hosting support files:
 
-### Moving local data into D1
+- public/.nojekyll
 
-```bash
-node scripts/dump-to-d1.mjs > prisma/d1-seed.sql
-```
+## Local development
 
-Then apply the SQL file with Wrangler against your D1 database.
+Install and run:
 
-## Product Notes
+- npm install
+- npm run dev
 
-### What is real today
+Optional DB tasks for dynamic/cloudflare mode:
 
-- the builder flow and compatibility checks
-- the seeded part catalog
-- the marketplace scoring and UX around import risk
-- public showcase pages and print export
+- npm run db:migrate
+- npm run db:seed
+- npm run db:studio
 
-### What still needs production work
+## Feature highlights
 
-- live retailer integrations
-- auth and saved user accounts
-- historical price tracking beyond seeded fixtures
-- automated tests and CI guardrails
-- stronger typing around the database facade and route payloads
+- compatibility checks: socket, RAM type, form factor, clearances, PSU fit, wattage
+- marketplace trust signals: landed cost, seller trust, warranty risk, import caution
+- premium build showcase with print-to-PDF support
+- static-mode share links that work on GitHub Pages
 
-## Improvement Opportunities
+## Future integration notes
 
-These are the highest-value follow-ups I would tackle after the current prototype:
+Provider interfaces include clear extension points for:
 
-1. Replace mock providers with real retailer/eBay/AliExpress integrations and cache them aggressively.
-2. Tighten TypeScript around the D1 facade so route handlers stop relying on `any`.
-3. Refactor the builder effects for React 19 lint compliance and cleaner async state transitions.
-4. Add Playwright coverage for the builder, pricing panel, and share flow.
-5. Clean up text encoding issues so metadata, labels, and generated content render cleanly everywhere.
+- official retailer feeds
+- official eBay API integration
+- approved AliExpress partner data
 
-## Repository Snapshot
-
-RigMate AU already has a strong product hook, clear audience, and a noticeably more opinionated value proposition than a typical PC picker. The next step is mostly execution polish: better operational correctness, cleaner typing, and production-grade data sources.
+When adding future integrations, preserve source-policy exclusions and legal sourcing constraints in this README.
