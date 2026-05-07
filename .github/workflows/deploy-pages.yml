@@ -20,7 +20,6 @@ jobs:
     env:
       NEXT_PUBLIC_DEPLOY_TARGET: github-pages
       NEXT_PUBLIC_BASE_PATH: /rigmateau
-      NODE_ENV: production
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -38,6 +37,8 @@ jobs:
         run: npm run lint
 
       - name: Build static site
+        env:
+          NODE_ENV: production
         run: npm run build:github-pages
 
       - name: Upload artifact
